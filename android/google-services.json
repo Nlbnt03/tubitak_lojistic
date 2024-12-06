@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "970253440757",
+    "project_id": "lojistik-c3958",
+    "storage_bucket": "lojistik-c3958.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:970253440757:android:c8ec31080657b1612d17bc",
+        "android_client_info": {
+          "package_name": "com.nalbantsoft.lojistik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQY718FkNjJJbgVVbYBO1DH1aLO3PvpZw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
