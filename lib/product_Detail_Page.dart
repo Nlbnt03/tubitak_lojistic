@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lojistik/siparis_islemleri.dart';
+import 'package:lojistik/siparis_olustur_staff.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
@@ -21,6 +24,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   double? salePrice;
   String? note;
 
+  // Görünürlük değişkenleri
+  bool isNameVisible = true;
+  bool isBarcodeVisible = true;
+  bool isStockQuantityVisible = true;
+  bool isLocationVisible = true;
+  bool isPurchasePriceVisible = true;
+  bool isSalePriceVisible = true;
+  bool isNoteVisible = true;
+
   bool isLoading = true;
 
   // TextEditingController'lar
@@ -40,7 +52,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     _fetchProductDetails();
   }
 
-  // Firestore'dan ürün detaylarını getirme fonksiyonu
   Future<void> _fetchProductDetails() async {
     try {
       DocumentSnapshot productSnapshot = await FirebaseFirestore.instance
@@ -53,6 +64,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         productSnapshot.data() as Map<String, dynamic>;
 
         setState(() {
+          // Ürün bilgilerini atama
           productName = productData['name'] ?? 'Bilgi yok';
           barcode = productData['barcode'] ?? 'Bilgi yok';
           stockQuantity = productData['stockQuantity'] ?? 0;
@@ -61,7 +73,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           salePrice = productData['salePrice']?.toDouble() ?? 0.0;
           note = productData['note'] ?? 'Bilgi yok';
 
-          isLoading = false;
+          // Görünürlük ayarlarını Firestore'dan çekip atama
+          isNameVisible = productData['isNameVisible'] ?? true;
+          isBarcodeVisible = productData['isBarcodeVisible'] ?? true;
+          isStockQuantityVisible = productData['isStockQuantityVisible'] ?? true;
+          isLocationVisible = productData['isLocationVisible'] ?? true;
+          isPurchasePriceVisible = productData['isPurchasePriceVisible'] ?? true;
+          isSalePriceVisible = productData['isSalePriceVisible'] ?? true;
+          isNoteVisible = productData['isNoteVisible'] ?? true;
+
+          isLoading = false; // Yükleme tamamlandı
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -76,40 +97,165 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
-  // Firestore'da ürün detaylarını güncelleme fonksiyonu
-  Future<void> _updateProductDetails() async {
+
+  // Görünürlük ayarlarını güncelleme fonksiyonu
+  Future<void> _updateVisibility(String key, bool value) async {
     try {
       await FirebaseFirestore.instance
           .collection('product')
           .doc(widget.productId)
-          .update({
-        'name': productNameController.text.isNotEmpty
-            ? productNameController.text
-            : productName,
-        'barcode': barcodeController.text.isNotEmpty
-            ? barcodeController.text
-            : barcode,
-        'stockQuantity': stockQuantityController.text.isNotEmpty
-            ? int.tryParse(stockQuantityController.text) ?? stockQuantity
-            : stockQuantity,
-        'location': locationController.text.isNotEmpty
-            ? locationController.text
-            : location,
-        'purchasePrice': purchasePriceController.text.isNotEmpty
-            ? double.tryParse(purchasePriceController.text) ?? purchasePrice
-            : purchasePrice,
-        'salePrice': salePriceController.text.isNotEmpty
-            ? double.tryParse(salePriceController.text) ?? salePrice
-            : salePrice,
-        'note': noteController.text.isNotEmpty ? noteController.text : note,
-      });
+          .update({key: value});
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ürün bilgileri başarıyla güncellendi!')),
+        SnackBar(content: Text('$key görünürlüğü güncellendi!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Hata: $e')),
+      );
+    }
+  }
+
+  Future<void> _checkStockAndProcess(String companyId, int requestedQuantity) async {
+    try {
+      final productDoc = await FirebaseFirestore.instance
+          .collection('product') // Ürünlerin tutulduğu koleksiyon
+          .doc(widget.productId)
+          .get();
+
+      if (productDoc.exists) {
+        final stock = productDoc.data()?['stockQuantity'] ?? 0; // Firestore'daki stok miktarı
+
+        if (requestedQuantity <= stock) {
+          // Stok yeterli
+          print("Stok yeterli: Talep edilen miktar: $requestedQuantity, Mevcut stok: $stock");
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Talep edilen miktar stoktan düşüldü."),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Stoktan düş
+          await FirebaseFirestore.instance.collection('product').doc(widget.productId).update({
+            'stockQuantity': FieldValue.increment(-requestedQuantity),
+          });
+
+          // Process koleksiyonuna ürün ekle veya güncelle
+          await _addOrUpdateProductInProcess(companyId, widget.productId, requestedQuantity);
+
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SiparisOlustur(id: companyId),));
+        } else {
+          // Stok yetersiz
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Yetersiz stok! Mevcut stok: $stock"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Ürün bulunamadı."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Hata: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _addOrUpdateProductInProcess(String companyId, String productId, int requestedQuantity) async {
+    try {
+      // Firestore'daki `process` koleksiyonuna erişim
+      final processRef = FirebaseFirestore.instance.collection('process').doc(companyId);
+      final processDoc = await processRef.get();
+
+      if (processDoc.exists) {
+        List<dynamic> products = processDoc.data()?['products'] ?? [];
+
+        // Aynı ürün ID'sine sahip ürün var mı kontrol et
+        final existingProductIndex = products.indexWhere((product) => product['productId'] == productId);
+
+        if (existingProductIndex != -1) {
+          // Ürün mevcutsa, miktarı güncelle
+          products[existingProductIndex]['requestedStock'] += requestedQuantity;
+
+          // Güncellenmiş listeyi tekrar kaydet
+          await processRef.update({
+            'products': products,
+          });
+
+          print("Ürün sepette mevcut, miktar güncellendi.");
+        } else {
+          // Ürün yoksa yeni ürün ekle
+          Map<String, dynamic> newProduct = {
+            "productId": productId,
+            "requestedStock": requestedQuantity,
+          };
+
+          await processRef.update({
+            "products": FieldValue.arrayUnion([newProduct]),
+          });
+
+          print("Yeni ürün sepete eklendi.");
+        }
+      } else {
+        // Eğer `process` belgesi yoksa yeni belge oluştur ve ürünü ekle
+        Map<String, dynamic> newProduct = {
+          "productId": productId,
+          "requestedStock": requestedQuantity,
+        };
+
+        await processRef.set({
+          "products": [newProduct],
+        });
+
+        print("Yeni ürün sepete eklendi ve process belgesi oluşturuldu.");
+      }
+    } catch (e) {
+      print("Process koleksiyonuna ekleme veya güncelleme sırasında hata oluştu: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Hata: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _addProductToProcess(String companyId, String productId, int requestedQuantity) async {
+    try {
+      // Firestore'daki `process` koleksiyonuna erişim
+      final processRef = FirebaseFirestore.instance.collection('process').doc(companyId);
+
+      // Eklemek istediğiniz ürün
+      Map<String, dynamic> newProduct = {
+        "productId": productId,
+        "requestedStock": requestedQuantity,
+      };
+
+      // Process tablosunda ürün sepetine yeni ürün ekle
+      await processRef.update({
+        "products": FieldValue.arrayUnion([newProduct]),
+      });
+
+      print("Ürün başarıyla process koleksiyonuna eklendi.");
+    } catch (e) {
+      print("Process koleksiyonuna ekleme sırasında hata oluştu: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Hata: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -161,6 +307,81 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
+  // Görünürlük ayarını değiştiren dialog
+  void _showVisibilityDialog(
+      BuildContext context,
+      String title,
+      String message,
+      bool currentValue,
+      Function(bool) onChanged,
+      ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(message),
+            const SizedBox(height: 16),
+            RadioListTile<bool>(
+              title: const Text('Görünür'),
+              value: true,
+              groupValue: currentValue,
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(value);
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            RadioListTile<bool>(
+              title: const Text('Görünmez'),
+              value: false,
+              groupValue: currentValue,
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(value);
+                  Navigator.pop(context);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Verilerin güncellenmesi ve Firebase'e kaydedilmesi
+  void _updateProductData() async {
+    try {
+      await FirebaseFirestore.instance.collection('product').doc(widget.productId).update({
+        'name': productName,
+        'barcode': barcode,
+        'stockQuantity': stockQuantity,
+        'location': location,
+        'purchasePrice': purchasePrice,
+        'salePrice': salePrice,
+        'note': note,
+        'isNameVisible': isNameVisible,
+        'isBarcodeVisible': isBarcodeVisible,
+        'isStockQuantityVisible': isStockQuantityVisible,
+        'isLocationVisible': isLocationVisible,
+        'isPurchasePriceVisible': isPurchasePriceVisible,
+        'isSalePriceVisible': isSalePriceVisible,
+        'isNoteVisible': isNoteVisible,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ürün bilgileri başarıyla güncellendi!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hata: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,89 +399,246 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             _buildDetailRow(
               'Ürün Adı',
               productName ?? '',
-              productNameController,
-                  (value) => setState(() => productName = value),
+              isNameVisible,
+                  (value) {
+                setState(() => isNameVisible = value);
+                _updateVisibility('isNameVisible', value);
+              },
             ),
-            Divider(),
+            const Divider(),
             _buildDetailRow(
               'Barkod',
               barcode ?? '',
-              barcodeController,
-                  (value) => setState(() => barcode = value),
+              isBarcodeVisible,
+                  (value) {
+                setState(() => isBarcodeVisible = value);
+                _updateVisibility('isBarcodeVisible', value);
+              },
             ),
-            Divider(),
+            const Divider(),
             _buildDetailRow(
               'Stok Miktarı',
               stockQuantity.toString(),
-              stockQuantityController,
-                  (value) => setState(() =>
-              stockQuantity = int.tryParse(value) ?? stockQuantity),
+              isStockQuantityVisible,
+                  (value) {
+                setState(() => isStockQuantityVisible = value);
+                _updateVisibility('isStockQuantityVisible', value);
+              },
             ),
-            Divider(),
+            const Divider(),
             _buildDetailRow(
               'Depo Konumu',
               location ?? '',
-              locationController,
-                  (value) => setState(() => location = value),
+              isLocationVisible,
+                  (value) {
+                setState(() => isLocationVisible = value);
+                _updateVisibility('isLocationVisible', value);
+              },
             ),
-            Divider(),
+            const Divider(),
             _buildDetailRow(
               'Alış Fiyatı',
-              purchasePrice.toString() ?? '',
-              purchasePriceController,
-                  (value) => setState(() => purchasePrice = double.parse(value)),
+              purchasePrice.toString(),
+              isPurchasePriceVisible,
+                  (value) {
+                setState(() => isPurchasePriceVisible = value);
+                _updateVisibility('isPurchasePriceVisible', value);
+              },
             ),
-            Divider(),
+            const Divider(),
             _buildDetailRow(
               'Satış Fiyatı',
-              salePrice.toString() ?? '',
-              salePriceController,
-                  (value) => setState(() => salePrice = double.parse(value)),
+              salePrice.toString(),
+              isSalePriceVisible,
+                  (value) {
+                setState(() => isSalePriceVisible = value);
+                _updateVisibility('isSalePriceVisible', value);
+              },
             ),
-            Divider(),
+            const Divider(),
             _buildDetailRow(
               'Not',
               note ?? '',
-              noteController,
-                  (value) => setState(() => note = value),
+              isNoteVisible,
+                  (value) {
+                setState(() => isNoteVisible = value);
+                _updateVisibility('isNoteVisible', value);
+              },
             ),
-            Divider(),
-            const SizedBox(height: 20),
+            const Divider(),
+            SizedBox(height: 20,),
             Center(
               child: SizedBox(
                 width: 343,
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff65558F)
+                    backgroundColor: Color(0xff65558F),
                   ),
-                  onPressed: _updateProductDetails,
-                  child: const Text('Ürün Bilgilerini Güncelle',style: TextStyle(color: Colors.white),),
+                  onPressed: _updateProductData,
+                  child: const Text('Verileri Güncelle',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
                 ),
               ),
             ),
+            SizedBox(height: 20,),
+            Center(
+              child: SizedBox(
+                width: 343,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xff65558F),
+                  ),
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    final savedId = prefs.getString('companyId'); // Kaydedilmiş ID'yi al
+
+                    if (savedId != null) {
+                      print('Company ID: $savedId');
+
+                      // AlertDialog ile miktar sor
+                      TextEditingController quantityController = TextEditingController();
+
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Miktar Girin"),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("Talep edilen stok miktarını girin:"),
+                                SizedBox(height: 2,),
+                                TextField(
+                                  controller: quantityController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(hintText: "Miktar"),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context); // Dialog'u kapat
+                                },
+                                child: const Text("İptal"),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final enteredQuantity = int.tryParse(quantityController.text);
+
+                                  if (enteredQuantity == null || enteredQuantity <= 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Geçerli bir miktar giriniz."),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  } else {
+                                    // Firestore'daki stok miktarını kontrol et
+                                    Navigator.pop(context); // Dialog'u kapat
+                                    await _checkStockAndProcess(savedId, enteredQuantity);
+                                  }
+                                },
+                                child: const Text("Tamam"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Seçili Şirket bulunamadı.'),
+                          backgroundColor: Colors.red,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => SiparisIslemleri()),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Sepete Ekle',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String title, String value,
-      TextEditingController controller, Function(String) onSaved) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Row(
-            children: [
-              Text(value),
-              _buildPopupMenu(controller, title, onSaved),
-            ],
-          ),
-        ],
-      ),
+  Widget _buildDetailRow(
+      String title,
+      String value,
+      bool isVisible,
+      Function(bool) onVisibilityChanged,
+      ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(width: 5.0,),
+            IconButton(
+              icon: Icon(
+                Icons.remove_red_eye,
+                color: isVisible ? Colors.green : Colors.red,
+              ),
+              onPressed: () {
+                _showVisibilityDialog(
+                  context,
+                  '$title Görünürlüğü',
+                  '$title görünürlüğünü değiştirmek ister misiniz?',
+                  isVisible,
+                  onVisibilityChanged,
+                );
+              },
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Text(value),
+            _buildPopupMenu(
+              isVisible ? TextEditingController(text: value) : TextEditingController(),
+              title,
+                  (newValue) {
+                setState(() {
+                  if (title == 'Ürün Adı') {
+                    productName = newValue;
+                  } else if (title == 'Barkod') {
+                    barcode = newValue;
+                  } else if (title == 'Stok Miktarı') {
+                    stockQuantity = int.tryParse(newValue);
+                  } else if (title == 'Depo Konumu') {
+                    location = newValue;
+                  } else if (title == 'Alış Fiyatı') {
+                    purchasePrice = double.tryParse(newValue);
+                  } else if (title == 'Satış Fiyatı') {
+                    salePrice = double.tryParse(newValue);
+                  } else if (title == 'Not') {
+                    note = newValue;
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

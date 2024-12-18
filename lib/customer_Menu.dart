@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lojistik/listed_product_customer.dart';
+import 'package:lojistik/search_with_barcode.dart';
+import 'package:lojistik/search_with_barcode_customer.dart';
+import 'package:lojistik/siparis_islemleri.dart';
+import 'package:lojistik/siparis_islemleri_customer.dart';
 
 class CustomerMenu extends StatefulWidget {
   const CustomerMenu({super.key});
@@ -14,7 +19,7 @@ class _CustomerMenuState extends State<CustomerMenu> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Staff Menu"),
+        title: const Text("Customer Menu"),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -22,96 +27,81 @@ class _CustomerMenuState extends State<CustomerMenu> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // SearchBar'ı buraya ekliyoruz
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          hintText: "İsim ile ürün ara",
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () {
-                        // Arama butonuna basıldığında yapılacak işlemler
-                        print("Arama yapıldı: ${_searchController.text}");
-                      },
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 25), // Boşluk ekledik
               Center(
-                child: Container(
-                  height: 176,
-                  width: 343,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                    border: Border.all(color: Colors.black),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        "Ürün Listesi",
-                        style: TextStyle(fontSize: 25),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 25),
-              Center(
-                child: Container(
-                  height: 176,
-                  width: 343,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                    border: Border.all(color: Colors.black),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        "Barkod ile Ürün Ara",
-                        style: TextStyle(fontSize: 25),
-                      ),
-                    ],
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ListedProductCustomer(),));
+                  },
+                  child: Container(
+                    height: 176,
+                    width: 343,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "Ürün Listesi",
+                          style: TextStyle(fontSize: 25),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 25),
               Center(
-                child: Container(
-                  height: 176,
-                  width: 343,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                    border: Border.all(color: Colors.black),
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => SearchWithBarcodeCustomer(),));
+                  },
+                  child: Container(
+                    height: 176,
+                    width: 343,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "Barkod ile Ürün Ara",
+                          style: TextStyle(fontSize: 25),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        "Sipariş Listesi Oluştur",
-                        style: TextStyle(fontSize: 25),
-                      ),
-                    ],
+                ),
+              ),
+              const SizedBox(height: 25),
+              Center(
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => SiparisIslemleriCustomer(),));
+                  },
+                  child: Container(
+                    height: 176,
+                    width: 343,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "Sipariş Listesi Oluştur",
+                          style: TextStyle(fontSize: 25),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

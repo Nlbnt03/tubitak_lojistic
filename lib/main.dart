@@ -1,12 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:lojistik/add_item_name.dart';
-import 'package:lojistik/added_succes.dart';
-import 'package:lojistik/customer_Menu.dart';
 import 'package:lojistik/firebase_options.dart';
-import 'package:lojistik/listed_product.dart';
-import 'package:lojistik/load_With_qr.dart';
-import 'package:lojistik/logIn_Page.dart';
 import 'package:lojistik/staff_Menu.dart';
 
 void main() async{
@@ -27,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-      home: LoadWithQr(),
+      home: StaffMenu(),
     );
   }
 }

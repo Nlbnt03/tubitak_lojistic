@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:lojistik/add_item_name.dart';
 import 'package:lojistik/listed_product.dart';
 import 'package:lojistik/load_With_qr.dart';
+import 'package:lojistik/search_with_barcode.dart';
+import 'package:lojistik/siparis_islemleri.dart';
+import 'package:lojistik/siparis_olustur_staff.dart';
 
 class StaffMenu extends StatefulWidget {
   const StaffMenu({super.key});
@@ -104,43 +107,53 @@ class _StaffMenuState extends State<StaffMenu> {
               ),
               const SizedBox(height: 25),
               Center(
-                child: Container(
-                  height: 96,
-                  width: 343,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                    border: Border.all(color: Colors.black),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        "Barkod ile Ürün Ara",
-                        style: TextStyle(fontSize: 25),
-                      ),
-                    ],
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.push(context,MaterialPageRoute(builder: (context) => SearchWithBarcode(),));
+                  },
+                  child: Container(
+                    height: 96,
+                    width: 343,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "Barkod ile Ürün Ara",
+                          style: TextStyle(fontSize: 25),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 25),
-              Center(
-                child: Container(
-                  height: 96,
-                  width: 343,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                    border: Border.all(color: Colors.black),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        "Fiş Üret",
-                        style: TextStyle(fontSize: 25),
-                      ),
-                    ],
+              GestureDetector(
+                onTap: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SiparisIslemleri(),));
+                },
+                child: Center(
+                  child: Container(
+                    height: 96,
+                    width: 343,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "Fiş Üret",
+                          style: TextStyle(fontSize: 25),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

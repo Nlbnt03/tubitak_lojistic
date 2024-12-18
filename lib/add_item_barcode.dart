@@ -24,6 +24,16 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
   final TextEditingController salePriceController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
 
+  // Görülebilirlik durumları
+  bool isNameVisible = true;
+  bool isBarcodeVisible = true;
+  bool isStockQuantityVisible = true;
+  bool isLocationVisible = true;
+  bool isPurchaseDateVisible = true;
+  bool isPurchasePriceVisible = true;
+  bool isSalePriceVisible = true;
+  bool isNoteVisible = true;
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +76,54 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
       ),
     );
   }
+
+  void _showVisibilityDialog(BuildContext context, String label, String message, bool currentValue, Function(bool) onChanged) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$label Düzenle'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(message),
+            ListTile(
+              title: Text("Görülebilir"),
+              leading: Radio<bool>(
+                value: true, // Görülebilir seçeneği
+                groupValue: currentValue,
+                onChanged: (bool? value) {
+                  if (value != null) {
+                    onChanged(value); // Değeri güncelle
+                    Navigator.of(context).pop(); // Dialog'u kapat
+                  }
+                },
+              ),
+            ),
+            ListTile(
+              title: Text("Görülemez"),
+              leading: Radio<bool>(
+                value: false, // Görülemez seçeneği
+                groupValue: currentValue,
+                onChanged: (bool? value) {
+                  if (value != null) {
+                    onChanged(value); // Değeri güncelle
+                    Navigator.of(context).pop(); // Dialog'u kapat
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('İptal'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Future<void> _selectDate(BuildContext context) async {
     DateTime? pickedDate = await showDatePicker(
@@ -153,6 +211,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Ürün Adı",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isNameVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isNameVisible, (value) {
+                          setState(() {
+                            isNameVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -167,6 +239,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Barkod Numarası",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isBarcodeVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isBarcodeVisible, (value) {
+                          setState(() {
+                            isBarcodeVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -181,6 +267,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Stok Miktarı",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isStockQuantityVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isStockQuantityVisible, (value) {
+                          setState(() {
+                            isStockQuantityVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -196,6 +296,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Depo Konumu",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isLocationVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isLocationVisible, (value) {
+                          setState(() {
+                            isLocationVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -210,6 +324,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Alım Tarihi",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isPurchaseDateVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isPurchaseDateVisible, (value) {
+                          setState(() {
+                            isPurchaseDateVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -225,6 +353,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Alış Fiyatı",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isPurchasePriceVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isPurchasePriceVisible, (value) {
+                          setState(() {
+                            isPurchasePriceVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -240,6 +382,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Satış Fiyatı",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isSalePriceVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isSalePriceVisible, (value) {
+                          setState(() {
+                            isSalePriceVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -255,6 +411,20 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text("Not",style: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),),
+                    SizedBox(width: 5.0),
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove_red_eye,
+                        color: isNoteVisible ? Colors.green : Colors.red, // Icon rengi, seçilen duruma göre değişir.
+                      ),
+                      onPressed: () {
+                        _showVisibilityDialog(context, "Satış Fiyatı", "Satış fiyatı görünürlüğünü ayarla", isNoteVisible, (value) {
+                          setState(() {
+                            isNoteVisible = value; // RadioButton değeri değiştiğinde isSalePriceVisible güncellenir.
+                          });
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -286,6 +456,14 @@ class _AddItemBarcodeState extends State<AddItemBarcode> {
                         salePrice:
                         double.tryParse(salePriceController.text) ?? 0.0,
                         note: noteController.text,
+                        isNameVisible: isNameVisible,
+                        isBarcodeVisible: isBarcodeVisible,
+                        isStockQuantityVisible: isStockQuantityVisible,
+                        isLocationVisible: isLocationVisible,
+                        isPurchaseDateVisible: isPurchaseDateVisible,
+                        isPurchasePriceVisible: isPurchasePriceVisible,
+                        isSalePriceVisible: isSalePriceVisible,
+                        isNoteVisible: isNoteVisible,
                       );
                       await addProductToFirebase(product);
 
