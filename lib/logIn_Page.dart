@@ -15,6 +15,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailOrPhoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordVisible = false; // Şifre görünürlüğü için değişken
+
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -107,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                   padding: const EdgeInsets.only(left: 8.0,right: 8.0),
                   child: TextField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: !_isPasswordVisible, // Şifreyi göster/gizle
                     decoration: InputDecoration(
                       labelText: 'Şifre',
                       border: OutlineInputBorder(
@@ -115,9 +117,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.visibility_off),
+                        icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off,),
                         onPressed: () {
-                          // Şifreyi göster/gizle fonksiyonu buraya eklenebilir
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible; // Görünürlüğü değiştir
+                          });
                         },
                       ),
                     ),

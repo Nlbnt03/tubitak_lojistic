@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lojistik/delete_succsess.dart';
 import 'package:lojistik/listed_product_customer.dart';
 import 'package:lojistik/product.dart';
 import 'package:lojistik/search_with_barcode.dart';
@@ -199,6 +200,95 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
       },
     );
   }
+  Future<void> updateStockAndRemoveProduct(String userId, String processId, int productIndex) async {
+    try {
+      // 1. users koleksiyonundan selfProcess alt koleksiyonunu referans al
+      final processRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('selfProcess')
+          .doc(processId);
+
+      final processSnapshot = await processRef.get();
+
+      // Eğer belge mevcut değilse hata fırlat
+      if (!processSnapshot.exists) {
+        throw Exception("Process bulunamadı");
+      }
+
+      // 'products' alanını al
+      List<dynamic> products = processSnapshot.data()?['products'] ?? [];
+
+      // Geçerli bir index kontrolü
+      if (productIndex < 0 || productIndex >= products.length) {
+        throw Exception("Geçersiz ürün indexi");
+      }
+
+      // 2. Silinecek ürünün bilgilerini al
+      final Map<String, dynamic> product = products[productIndex];
+      final String productId = product['productId'];
+      final int requestedStock = product['requestedStock'];
+
+      // 3. Product koleksiyonunda stok güncellemesi yap
+      final productRef = FirebaseFirestore.instance.collection('product').doc(productId);
+      await productRef.update({
+        'stockQuantity': FieldValue.increment(requestedStock),
+      });
+
+      // 4. Process alt koleksiyonundaki product array'inden ürünü sil
+      products.removeAt(productIndex);
+      await processRef.update({
+        'products': products,
+      });
+
+      // Başarı mesajı
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Ürün başarıyla silindi ve stok güncellendi."),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      // Hata mesajı
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Hata: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+
+
+  void confirmDeleteProduct(String processId, int productIndex) {
+    final String userId = FirebaseAuth.instance.currentUser!.uid;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Ürünü Sil"),
+          content: const Text("Bu ürünü silmek istediğinize emin misiniz?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Dialog'u kapat
+              },
+              child: const Text("İptal"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(context,MaterialPageRoute(builder: (context) => DeleteSuccess(id: widget.id),)); // Dialog'u kapat
+                updateStockAndRemoveProduct(userId, processId, productIndex); // Silme işlemini başlat
+              },
+              child: const Text("Onayla"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -263,6 +353,8 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       Text("Toplam",
                           style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text("Sil",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -292,6 +384,12 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                                   Text("${product['salePrice']}₺"), // Satış fiyatı
                                   Text("${product['requestedStock']}"), // Talep edilen stok
                                   Text("${product['totalPrice'].toStringAsFixed(2)}₺"), // Toplam fiyat
+                                  GestureDetector(
+                                    onTap: () {
+                                      confirmDeleteProduct(widget.id, index); // Bu şekilde bir callback sağlıyoruz
+                                    },
+                                    child: const Icon(Icons.delete, color: Colors.red),
+                                  ),
                                 ],
                               ),
                             );

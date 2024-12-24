@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lojistik/listed_product_customer.dart';
+import 'package:lojistik/profile_page.dart';
 import 'package:lojistik/search_with_barcode.dart';
 import 'package:lojistik/search_with_barcode_customer.dart';
 import 'package:lojistik/siparis_islemleri.dart';
@@ -21,6 +22,16 @@ class _CustomerMenuState extends State<CustomerMenu> {
       appBar: AppBar(
         title: const Text("Customer Menu"),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: IconButton(
+                onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilSayfasi(),));
+                },
+                icon: Icon(Icons.account_circle_sharp,size: 40,)),
+          )
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(

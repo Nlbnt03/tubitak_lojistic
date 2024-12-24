@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:lojistik/add_item_name.dart';
 import 'package:lojistik/listed_product.dart';
 import 'package:lojistik/load_With_qr.dart';
+import 'package:lojistik/profile_page.dart';
 import 'package:lojistik/search_with_barcode.dart';
 import 'package:lojistik/siparis_islemleri.dart';
-import 'package:lojistik/siparis_olustur_staff.dart';
 
 class StaffMenu extends StatefulWidget {
   const StaffMenu({super.key});
@@ -22,6 +22,16 @@ class _StaffMenuState extends State<StaffMenu> {
       appBar: AppBar(
         title: const Text("Staff Menu"),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: IconButton(
+                onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilSayfasi(),));
+                },
+                icon: Icon(Icons.account_circle_sharp,size: 40,)),
+          )
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
