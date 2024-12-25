@@ -1,12 +1,17 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lojistik/delete_succsess.dart';
 import 'package:lojistik/listed_product_customer.dart';
 import 'package:lojistik/product.dart';
-import 'package:lojistik/search_with_barcode.dart';
+import 'package:lojistik/search_with_barcode_customer.dart';
 import 'package:lojistik/siparis_islemleri_customer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SiparisOlusturCustomer extends StatefulWidget {
   final String id;
@@ -20,6 +25,8 @@ class SiparisOlusturCustomer extends StatefulWidget {
 class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
   late Future<Map<String, dynamic>> _companyDetailsFuture;
   List<Product> _sepetUrunler = [];
+  double totalPrice = 0.0;
+  late Future<List<Map<String, dynamic>>> _productDetailsFuture;
 
   @override
   void initState()
@@ -27,6 +34,7 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
     super.initState();
     _companyDetailsFuture = _getCompanyDetails();
     _fetchSepetUrunler();
+    _productDetailsFuture = fetchProductsWithDetails(widget.id);
   }
 
   Future<void> saveProductId(String productId) async
@@ -130,6 +138,7 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
             });
           }
         }
+        _calculateTotalPrice(productDetails);
         return productDetails;
       } else {
         return [];
@@ -178,7 +187,7 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                       ),
                       onPressed: () {
                         Navigator.pop(context);
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => SearchWithBarcode(),));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => SearchWithBarcodeCustomer(),));
                         print("Barkod ile Ekle seçildi.");
                       },
                       child: const Text("Barkod ile Ekle",style: TextStyle(color: Colors.white),),
@@ -288,6 +297,116 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
       },
     );
   }
+  Future<String> createPdf(String companyName, String date, List<Map<String, dynamic>> products, double totalPrice) async {
+    final pdf = pw.Document();
+    // Create base font
+    final font = pw.Font.helvetica();
+
+    // Create text styles with the font
+    final titleStyle = pw.TextStyle(
+      font: font,
+      fontSize: 20,
+      fontWeight: pw.FontWeight.bold,
+    );
+
+    final headerStyle = pw.TextStyle(
+      font: font,
+      fontSize: 18,
+      fontWeight: pw.FontWeight.bold,
+    );
+
+    final normalStyle = pw.TextStyle(
+      font: font,
+      fontSize: 14,
+    );
+
+    final tableHeaderStyle = pw.TextStyle(
+      font: font,
+      fontWeight: pw.FontWeight.bold,
+    );
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Sirket Adi: $companyName'.toUpperCase(), style: titleStyle),
+              pw.Text('Tarih: $date'.toUpperCase(), style: normalStyle),
+              pw.SizedBox(height: 20),
+
+              pw.Text('Ürün Listesi:'.toUpperCase(), style: headerStyle),
+              pw.Divider(),
+
+              // Table Header
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Expanded(flex: 3, child: pw.Text('Ürün Ismi'.toUpperCase(), style: tableHeaderStyle)),
+                  pw.Expanded(flex: 2, child: pw.Text('Birim Fiyat'.toUpperCase(), style: tableHeaderStyle)),
+                  pw.Expanded(flex: 1, child: pw.Text('Adet'.toUpperCase(), style: tableHeaderStyle)),
+                  pw.Expanded(flex: 2, child: pw.Text('Toplam'.toUpperCase(), style: tableHeaderStyle)),
+                ],
+              ),
+              pw.Divider(),
+
+              // Product List
+              pw.Column(
+                children: products.map((product) {
+                  return pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Expanded(flex: 3, child: pw.Text("${product['name']}".toUpperCase(), style: normalStyle)),
+                        pw.Expanded(flex: 2, child: pw.Text('${product['salePrice'].toStringAsFixed(2)} TL'.toUpperCase(), style: normalStyle)),
+                        pw.Expanded(flex: 1, child: pw.Text('${product['requestedStock']}'.toUpperCase(), style: normalStyle)),
+                        pw.Expanded(flex: 2, child: pw.Text('${(product['totalPrice'] as num).toStringAsFixed(2)} TL'.toUpperCase(), style: normalStyle)),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              pw.Divider(),
+              pw.SizedBox(height: 20),
+
+              // Total Price
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Text(
+                    'Toplam Fiyat: ${totalPrice.toStringAsFixed(2)} TL'.toUpperCase(),
+                    style: headerStyle,
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final output = await getTemporaryDirectory();
+    final file = File('${output.path}/siparis_detaylari.pdf');
+    await file.writeAsBytes(await pdf.save());
+    return file.path;
+  }
+
+  void sharePdf(String filePath) {
+    Share.shareXFiles([XFile(filePath)], text: 'Sipariş detayları ektedir.');
+  }
+
+  void _calculateTotalPrice(List<Map<String, dynamic>> products) {
+    double total = 0.0;
+    for (var product in products) {
+      total += product['totalPrice'];
+    }
+
+    setState(() {
+      totalPrice = total;
+    });
+  }
 
 
   @override
@@ -361,7 +480,7 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
 
                 Expanded(
                   child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: fetchProductsWithDetails(widget.id), // selfProcess içeriği
+                    future: _productDetailsFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
@@ -399,8 +518,83 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                     },
                   ),
                 ),
-
-
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft, // Tüm yapıyı ekranın sağına hizalar
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start, // İçerik sağa yaslanır
+                      children: [
+                        Divider(),
+                        Row(
+                          mainAxisSize: MainAxisSize.min, // Row genişliği içeriğe göre ayarlanır
+                          children: [
+                            Text(
+                              "Toplam Fiyat",
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.edit), // Düzenleme ikonu
+                              onPressed: () {
+                                // İkona basıldığında AlertDialog açılır
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    TextEditingController textController = TextEditingController();
+                                    return AlertDialog(
+                                      title: Text("Toplam Fiyat Güncelle"),
+                                      content: TextField(
+                                        controller: textController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(),
+                                          labelText: 'Yeni Fiyat Girin',
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("İptal"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Dialogu kapat
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Güncelle"),
+                                          onPressed: () {
+                                            setState(() {
+                                              totalPrice = double.tryParse(textController.text) ?? totalPrice;
+                                            });
+                                            Navigator.of(context).pop(); // Dialogu kapat
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 5),
+                        Row(
+                          mainAxisSize: MainAxisSize.min, // Sadece içeriğe göre genişlik alır
+                          children: [
+                            Text(
+                              '${totalPrice.toStringAsFixed(2)}', // Fiyatı gösterir
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            SizedBox(width: 4), // Metin ve ikon arasında boşluk bırakır
+                            Icon(
+                              Icons.currency_lira, // Türk lirası ikonu
+                              size: 18, // İkon boyutu
+                            ),
+                          ],
+                        ),
+                        Divider(),
+                      ],
+                    ),
+                  ),
+                ),
                 // Alt Butonlar
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -412,8 +606,22 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xff65558F),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
+                          final companyName = snapshot.data!['companyName'] ?? 'Bilinmiyor';
+                          final date = "${DateTime.now().day}.${DateTime.now().month}.${DateTime.now().year}";
+                          final products = await fetchProductsWithDetails(widget.id);
 
+                          if (products.isNotEmpty) {
+                            final filePath = await createPdf(companyName, date, products, totalPrice);
+                            sharePdf(filePath);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Sepette ürün bulunmamaktadır."),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                         child: const Text("Yazdır",style: TextStyle(color: Colors.white),),
                       ),
