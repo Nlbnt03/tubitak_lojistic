@@ -53,7 +53,7 @@ class _SiparisIslemleriState extends State<SiparisIslemleri> {
                               });
                             }
                           },
-                      icon: Icon(Icons.date_range_outlined))
+                          icon: Icon(Icons.date_range_outlined))
                     ],
                   ),
                 ],
@@ -61,7 +61,7 @@ class _SiparisIslemleriState extends State<SiparisIslemleri> {
               actions: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red
+                      backgroundColor: Colors.red
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -92,6 +92,7 @@ class _SiparisIslemleriState extends State<SiparisIslemleri> {
     await _firestore.collection('process').add({
       'companyName': companyName,
       'date': date.toIso8601String(),
+      'isPrinted': false, // Varsayılan olarak false
     });
   }
 
@@ -100,6 +101,37 @@ class _SiparisIslemleriState extends State<SiparisIslemleri> {
         .collection('process')
         .orderBy('date', descending: true)
         .snapshots();
+  }
+
+  Future<void> _deleteCompany(String companyId) async {
+    await _firestore.collection('process').doc(companyId).delete();
+  }
+
+  void _confirmDeleteCompany(String companyId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("İşlemi Sil"),
+          content: const Text("Bu işlemi silmek istediğinize emin misiniz?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Dialog'u kapat
+              },
+              child: const Text("İptal"),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteCompany(companyId); // Silme işlemini başlat
+                Navigator.pop(context); // Dialog'u kapat
+              },
+              child: const Text("Onayla"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -168,9 +200,19 @@ class _SiparisIslemleriState extends State<SiparisIslemleri> {
                     final company = companies[index];
                     final companyName = company['companyName'];
                     final date = DateTime.parse(company['date']);
+                    final isPrinted = company['isPrinted'] ?? false;
+
                     return ListTile(
                       title: Text(companyName),
                       subtitle: Text("Tarih: ${DateFormat('dd/MM/yyyy').format(date)}"),
+                      trailing: isPrinted
+                          ? IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _confirmDeleteCompany(company.id);
+                        },
+                      )
+                          : null,
                       onTap: () {
                         Navigator.push(
                           context,

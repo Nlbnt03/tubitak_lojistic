@@ -24,12 +24,12 @@ class AddedSucces extends StatelessWidget {
             height: 45,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor:  Color(0xff65558F),
               ),
                 onPressed: (){
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ListedProduct(),));
                 },
-                child: Text("Ürün Listesine Git",style: TextStyle(color: Colors.black,fontSize: 17),)
+                child: Text("Ürün Listesine Git",style: TextStyle(color: Colors.white,fontSize: 17),)
             ),
           ),
           const SizedBox(height: 10,),
@@ -38,12 +38,12 @@ class AddedSucces extends StatelessWidget {
             height: 45,
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor:  Color(0xff65558F),
                 ),
                 onPressed: (){
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AddItemName(),));
                 },
-                child: Text("Yeni Ürün Yükle",style: TextStyle(color : Colors.black,fontSize: 17),)
+                child: Text("Yeni Ürün Yükle",style: TextStyle(color : Colors.white,fontSize: 17),)
             ),
           ),
         ],

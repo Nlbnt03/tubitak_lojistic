@@ -1,0 +1,2 @@
+/Users/ynalbant/StudioProjects/lojistik/android/app/.cxx/Debug/6b183x6i/x86_64/CMakeFiles/rebuild_cache.dir
+/Users/ynalbant/StudioProjects/lojistik/android/app/.cxx/Debug/6b183x6i/x86_64/CMakeFiles/edit_cache.dir

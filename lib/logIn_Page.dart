@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Giriş başarısız: $e')),
+        SnackBar(content: Text('Giriş başarısız!')),
       );
     }
   }
@@ -141,8 +141,9 @@ class _LoginPageState extends State<LoginPage> {
                   height: 50,
                   child: ElevatedButton(
                       onPressed: _login,
-                      child: Text("Giriş Yap",style: TextStyle(color: Color(0xff333333)),),
+                      child: Text("Giriş Yap",style: TextStyle(color: Colors.white),),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xff65558F),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
                     ),
                   ),
@@ -161,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                           );
                         },
                         child: const Text(
-                          "Kayıt olun",
+                          " Kayıt olun",
                           style: TextStyle(
                             color: Color(0xffFF82AB),
                             fontWeight: FontWeight.bold,

@@ -103,6 +103,7 @@ class _SiparisIslemleriCustomerState extends State<SiparisIslemleriCustomer> {
         'companyName': companyName,
         'date': date.toIso8601String(),
         'products': [], // Başlangıçta ürün listesi boş olabilir
+        'isPrinted': false, // Varsayılan olarak false
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -134,6 +135,43 @@ class _SiparisIslemleriCustomerState extends State<SiparisIslemleriCustomer> {
         .snapshots();
   }
 
+  Future<void> _deleteCompany(String companyId) async {
+    final String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('selfProcess')
+        .doc(companyId)
+        .delete();
+  }
+
+  void _confirmDeleteCompany(String companyId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("İşlemi Sil"),
+          content: const Text("Bu işlemi silmek istediğinize emin misiniz?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Dialog'u kapat
+              },
+              child: const Text("İptal"),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteCompany(companyId); // Silme işlemini başlat
+                Navigator.pop(context); // Dialog'u kapat
+              },
+              child: const Text("Onayla"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -202,10 +240,19 @@ class _SiparisIslemleriCustomerState extends State<SiparisIslemleriCustomer> {
                     final process = processes[index];
                     final companyName = process['companyName'];
                     final date = DateTime.parse(process['date']);
+                    final isPrinted = process['isPrinted'] ?? false;
 
                     return ListTile(
                       title: Text(companyName),
                       subtitle: Text("Tarih: ${DateFormat('dd/MM/yyyy').format(date)}"),
+                      trailing: isPrinted
+                          ? IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _confirmDeleteCompany(process.id);
+                        },
+                      )
+                          : null,
                       onTap: () {
                         // SiparisOlustur sayfasına yönlendirme
                         Navigator.push(

@@ -37,6 +37,24 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
     _productDetailsFuture = fetchProductsWithDetails(widget.id);
   }
 
+  Future<void> updateIsPrintedStatus(String processId, bool status) async {
+    final String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('selfProcess')
+          .doc(processId)
+          .update({'isPrinted': status});
+
+      print("isPrinted güncellendi: $status");
+    } catch (e) {
+      print("isPrinted güncellenirken hata oluştu: $e");
+    }
+  }
+
+
   Future<void> saveProductId(String productId) async
   {
     final prefs = await SharedPreferences.getInstance();
@@ -614,6 +632,9 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                           if (products.isNotEmpty) {
                             final filePath = await createPdf(companyName, date, products, totalPrice);
                             sharePdf(filePath);
+
+                            // 📌 Firestore'da isPrinted'i true yap
+                            await updateIsPrintedStatus(widget.id, true);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -623,6 +644,7 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                             );
                           }
                         },
+
                         child: const Text("Yazdır",style: TextStyle(color: Colors.white),),
                       ),
                     ),

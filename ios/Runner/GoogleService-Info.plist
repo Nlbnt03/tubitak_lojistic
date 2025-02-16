@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyDKCQaLjHUc6x8CV0b9S-AcrvVSwJqPcvU</string>
+	<string>AIzaSyAcubUvhGvA9N6j_olXh8BWxrP9mh3zYx8</string>
 	<key>GCM_SENDER_ID</key>
-	<string>462304492570</string>
+	<string>330713263171</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.nalbantsoft.lojistik</string>
 	<key>PROJECT_ID</key>
-	<string>muallim-a34e4</string>
+	<string>fiotest-4c53a</string>
 	<key>STORAGE_BUCKET</key>
-	<string>muallim-a34e4.firebasestorage.app</string>
+	<string>fiotest-4c53a.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:462304492570:ios:172f45ce12d5d3550e25a3</string>
+	<string>1:330713263171:ios:1eb9fbd84e67138a18f8f6</string>
 </dict>
 </plist>

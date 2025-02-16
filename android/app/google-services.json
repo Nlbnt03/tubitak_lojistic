@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "462304492570",
-    "project_id": "muallim-a34e4",
-    "storage_bucket": "muallim-a34e4.firebasestorage.app"
+    "project_number": "330713263171",
+    "project_id": "fiotest-4c53a",
+    "storage_bucket": "fiotest-4c53a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:462304492570:android:0574e072de5254fe0e25a3",
+        "mobilesdk_app_id": "1:330713263171:android:0bf14f50f6c4de9318f8f6",
         "android_client_info": {
           "package_name": "com.nalbantsoft.lojistik"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDOvm-oRXOrLAUYPyGnQqdKKuccrV3brW4"
+          "current_key": "AIzaSyCIIUifSfb-gS5Nx66CCTSTfrCzgV_5tZ4"
         }
       ],
       "services": {

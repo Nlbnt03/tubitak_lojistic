@@ -54,7 +54,15 @@ class _SiparisOlusturState extends State<SiparisOlustur> {
         .doc(widget.id)
         .get();
     if (doc.exists) {
-      return doc.data() as Map<String, dynamic>;
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      if (!data.containsKey('isPrinted')) {
+        await FirebaseFirestore.instance
+            .collection('process')
+            .doc(widget.id)
+            .update({'isPrinted': false});
+        data['isPrinted'] = false;
+      }
+      return data;
     } else {
       throw Exception("Veri bulunamadı");
     }
@@ -511,6 +519,84 @@ class _SiparisOlusturState extends State<SiparisOlustur> {
                     },
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft, // Tüm yapıyı sola hizalar
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start, // İçerik sola yaslanır
+                      children: [
+                        const Divider(),
+                        Row(
+                          mainAxisSize: MainAxisSize.min, // Row genişliği içeriğe göre ayarlanır
+                          children: [
+                            const Text(
+                              "Toplam Fiyat",
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit), // Düzenleme ikonu
+                              onPressed: () {
+                                // İkona basıldığında AlertDialog açılır
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    TextEditingController textController = TextEditingController();
+                                    return AlertDialog(
+                                      title: const Text("Toplam Fiyat Güncelle"),
+                                      content: TextField(
+                                        controller: textController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                          border: OutlineInputBorder(),
+                                          labelText: 'Yeni Fiyat Girin',
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text("İptal"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Dialogu kapat
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: const Text("Güncelle"),
+                                          onPressed: () {
+                                            setState(() {
+                                              totalPrice = double.tryParse(textController.text) ?? totalPrice;
+                                            });
+                                            Navigator.of(context).pop(); // Dialogu kapat
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          mainAxisSize: MainAxisSize.min, // Sadece içeriğe göre genişlik alır
+                          children: [
+                            Text(
+                              '${totalPrice.toStringAsFixed(2)}', // Fiyatı gösterir
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                            const SizedBox(width: 4), // Metin ve ikon arasında boşluk bırakır
+                            const Icon(
+                              Icons.currency_lira, // Türk lirası ikonu
+                              size: 18, // İkon boyutu
+                            ),
+                          ],
+                        ),
+                        const Divider(),
+                      ],
+                    ),
+                  ),
+                ),
+
                 // Alt Butonlar
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -536,6 +622,19 @@ class _SiparisOlusturState extends State<SiparisOlustur> {
                                 // Create and share PDF
                                 final filePath = await createPdf(companyName, currentDate, products, totalPrice);
                                 sharePdf(filePath);
+
+                                // Firestore'da isPrinted değerini true olarak güncelle
+                                await FirebaseFirestore.instance
+                                    .collection('process')
+                                    .doc(widget.id)
+                                    .update({'isPrinted': true});
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Sipariş başarıyla yazdırıldı."),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -562,7 +661,6 @@ class _SiparisOlusturState extends State<SiparisOlustur> {
                             );
                           }
                         },
-
                         child: const Text("Yazdır",style: TextStyle(color: Colors.white),),
                       ),
                     ),

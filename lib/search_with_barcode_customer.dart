@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:lojistik/customer_Menu.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lojistik/customer_product_detail.dart';
-import 'package:lojistik/product_detail_page.dart';
 import 'package:lojistik/staff_Menu.dart';
 
 class SearchWithBarcodeCustomer extends StatefulWidget {
@@ -14,24 +14,22 @@ class SearchWithBarcodeCustomer extends StatefulWidget {
 
 class _SearchWithBarcodeCustomerState extends State<SearchWithBarcodeCustomer> {
   final TextEditingController _barcodeController = TextEditingController();
+  String? barcode;
 
-  // Barkod tarama fonksiyonu
   Future<void> scanBarcode() async {
-    try {
-      String barcode = await FlutterBarcodeScanner.scanBarcode(
-        '#ff6666', // İptal butonu rengi
-        'İptal', // İptal butonu yazısı
-        true, // Flaş kontrolü
-        ScanMode.BARCODE, // Tarama modu
-      );
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SimpleBarcodeScannerPage(),
+      ),
+    );
 
-      if (barcode != "-1") {
-        // Barkod okunduktan sonra text field'a barkodu yazdır
-        setState(() {
-          _barcodeController.text = barcode;
-        });
-      }
-    } catch (e) {
+    if (result != null && result is String) {
+      setState(() {
+        barcode = result;
+        _barcodeController.text = result;
+      });
+    } else {
       setState(() {
         _barcodeController.text = "Hata: Barkod okunamadı.";
       });
@@ -69,8 +67,6 @@ class _SearchWithBarcodeCustomerState extends State<SearchWithBarcodeCustomer> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,7 +77,7 @@ class _SearchWithBarcodeCustomerState extends State<SearchWithBarcodeCustomer> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => StaffMenu()),
+              MaterialPageRoute(builder: (context) => CustomerMenu()),
             );
           },
         ),

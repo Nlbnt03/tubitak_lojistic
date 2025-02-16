@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lojistik/info.dart';
 import 'package:lojistik/listed_product_customer.dart';
 import 'package:lojistik/profile_page.dart';
 import 'package:lojistik/search_with_barcode.dart';
@@ -22,6 +23,9 @@ class _CustomerMenuState extends State<CustomerMenu> {
       appBar: AppBar(
         title: const Text("Customer Menu"),
         centerTitle: true,
+        leading: IconButton(onPressed: (){
+          Navigator.push(context, MaterialPageRoute(builder: (context) => InfoPage(),));
+        }, icon: Icon(Icons.info,size: 40,)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 10.0),

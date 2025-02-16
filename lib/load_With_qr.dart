@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import 'package:lojistik/add_item_barcode.dart';
 import 'package:lojistik/add_item_name.dart';
 import 'package:lojistik/staff_Menu.dart';
@@ -15,24 +15,26 @@ class _LoadWithQrState extends State<LoadWithQr> {
   final TextEditingController _barcodeController = TextEditingController();
 
   Future<void> scanBarcode() async {
-    try {
-      String barcode = await FlutterBarcodeScanner.scanBarcode(
-        '#ff6666', // İptal butonu rengi
-        'İptal', // İptal butonu yazısı
-        true, // Flaş kontrolü
-        ScanMode.BARCODE, // Tarama modu
-      );
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SimpleBarcodeScannerPage(),
+      ),
+    );
 
-      if (barcode != "-1") {
-        // Barkod okunduktan sonra yeni sayfaya yönlendirme
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AddItemBarcode(barcode: barcode),
-          ),
-        );
-      }
-    } catch (e) {
+    if (result != null && result is String) {
+      setState(() {
+        _barcodeController.text = result;
+      });
+
+      // Barkod okunduktan sonra yeni sayfaya yönlendirme
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddItemBarcode(barcode: result),
+        ),
+      );
+    } else {
       setState(() {
         _barcodeController.text = "Hata: Barkod okunamadı.";
       });
@@ -44,9 +46,15 @@ class _LoadWithQrState extends State<LoadWithQr> {
     return Scaffold(
       backgroundColor: Colors.white, // Arka plan rengi
       appBar: AppBar(
-        leading: IconButton(icon: Icon(Icons.arrow_back),onPressed: (){
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StaffMenu(),));
-        },),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => StaffMenu()),
+            );
+          },
+        ),
         title: const Text("Barkod İle Ürün Yükle"),
         centerTitle: true,
       ),
@@ -96,13 +104,16 @@ class _LoadWithQrState extends State<LoadWithQr> {
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: ElevatedButton.icon(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => AddItemName(),));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddItemName()),
+                );
                 debugPrint("Manuel olarak yükleye tıklandı: ${_barcodeController.text}");
               },
-              icon: const Icon(Icons.add,color: Colors.white,),
-              label: const Text("Manuel Olarak Yükle",style: TextStyle(color: Colors.white),),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text("Manuel Olarak Yükle", style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xff65558F),
+                backgroundColor: const Color(0xff65558F),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
