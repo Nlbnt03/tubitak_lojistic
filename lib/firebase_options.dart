@@ -57,19 +57,19 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCIIUifSfb-gS5Nx66CCTSTfrCzgV_5tZ4',
-    appId: '1:330713263171:android:0bf14f50f6c4de9318f8f6',
-    messagingSenderId: '330713263171',
-    projectId: 'fiotest-4c53a',
-    storageBucket: 'fiotest-4c53a.firebasestorage.app',
+    apiKey: 'AIzaSyCz9vdA66pr38Y_k-ev6skthdkwhM-RGdA',
+    appId: '1:216622572552:android:92c384a18000c99fba5dbd',
+    messagingSenderId: '216622572552',
+    projectId: 'gtuapp-2de40',
+    storageBucket: 'gtuapp-2de40.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAcubUvhGvA9N6j_olXh8BWxrP9mh3zYx8',
-    appId: '1:330713263171:ios:1eb9fbd84e67138a18f8f6',
-    messagingSenderId: '330713263171',
-    projectId: 'fiotest-4c53a',
-    storageBucket: 'fiotest-4c53a.firebasestorage.app',
+    apiKey: 'AIzaSyAKvp6MofGazwIcbytu9PdMENxhix6ZM5U',
+    appId: '1:216622572552:ios:32799fe38206cc95ba5dbd',
+    messagingSenderId: '216622572552',
+    projectId: 'gtuapp-2de40',
+    storageBucket: 'gtuapp-2de40.firebasestorage.app',
     iosBundleId: 'com.nalbantsoft.lojistik',
   );
 

@@ -25,17 +25,23 @@ class SiparisOlusturCustomer extends StatefulWidget {
 class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
   late Future<Map<String, dynamic>> _companyDetailsFuture;
   List<Product> _sepetUrunler = [];
+  bool isPrinted = false;
   double totalPrice = 0.0;
   late Future<List<Map<String, dynamic>>> _productDetailsFuture;
 
   @override
-  void initState()
-  {
+  void initState() {
     super.initState();
-    _companyDetailsFuture = _getCompanyDetails();
+    _companyDetailsFuture = _getCompanyDetails().then((data) {
+      setState(() {
+        isPrinted = data['isPrinted'] ?? false;
+      });
+      return data;
+    });
     _fetchSepetUrunler();
     _productDetailsFuture = fetchProductsWithDetails(widget.id);
   }
+
 
   Future<void> updateIsPrintedStatus(String processId, bool status) async {
     final String userId = FirebaseAuth.instance.currentUser!.uid;
@@ -65,20 +71,34 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
 
   Future<Map<String, dynamic>> _getCompanyDetails() async {
     final String userId = FirebaseAuth.instance.currentUser!.uid;
-
-    DocumentSnapshot doc = await FirebaseFirestore.instance
+    final docRef = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .collection('selfProcess')
-        .doc(widget.id)
-        .get();
+        .doc(widget.id);
+
+    final doc = await docRef.get();
 
     if (doc.exists) {
-      return doc.data() as Map<String, dynamic>;
+      final data = doc.data() as Map<String, dynamic>;
+
+      // isPrinted alanı yoksa Firestore'a false olarak yaz
+      if (!data.containsKey('isPrinted')) {
+        await docRef.update({'isPrinted': false});
+        data['isPrinted'] = false;
+      }
+
+      // UI'da kullanmak için güncelle
+      setState(() {
+        isPrinted = data['isPrinted'] ?? false;
+      });
+
+      return data;
     } else {
       throw Exception("Veri bulunamadı");
     }
   }
+
 
 
   Future<void> _fetchSepetUrunler() async {
@@ -522,10 +542,14 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                                   Text("${product['requestedStock']}"), // Talep edilen stok
                                   Text("${product['totalPrice'].toStringAsFixed(2)}₺"), // Toplam fiyat
                                   GestureDetector(
-                                    onTap: () {
-                                      confirmDeleteProduct(widget.id, index); // Bu şekilde bir callback sağlıyoruz
-                                    },
-                                    child: const Icon(Icons.delete, color: Colors.red),
+                                      onTap: isPrinted
+                                          ? null
+                                          : () {
+                                        confirmDeleteProduct(widget.id, index);
+                                      },
+                                      child: isPrinted
+                                          ? Icon(Icons.delete_forever,color: Colors.red,)
+                                          : Icon(Icons.delete,color: Colors.red,)
                                   ),
                                 ],
                               ),
@@ -552,8 +576,8 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                             ),
                             IconButton(
-                              icon: Icon(Icons.edit), // Düzenleme ikonu
-                              onPressed: () {
+                              icon: isPrinted ?  Icon(Icons.edit_off) : Icon(Icons.edit), // Düzenleme ikonu
+                              onPressed: isPrinted ?  null : () {
                                 // İkona basıldığında AlertDialog açılır
                                 showDialog(
                                   context: context,
@@ -625,26 +649,91 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                           backgroundColor: Color(0xff65558F),
                         ),
                         onPressed: () async {
-                          final companyName = snapshot.data!['companyName'] ?? 'Bilinmiyor';
-                          final date = "${DateTime.now().day}.${DateTime.now().month}.${DateTime.now().year}";
-                          final products = await fetchProductsWithDetails(widget.id);
+                          if (!snapshot.hasData) return;
 
-                          if (products.isNotEmpty) {
-                            final filePath = await createPdf(companyName, date, products, totalPrice);
-                            sharePdf(filePath);
+                          final String companyName = snapshot.data!['companyName'] ?? 'Bilinmiyor';
+                          final String currentDate =
+                              "${DateTime.now().day.toString().padLeft(2, '0')}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().year}";
 
-                            // 📌 Firestore'da isPrinted'i true yap
-                            await updateIsPrintedStatus(widget.id, true);
-                          } else {
+                          final List<Map<String, dynamic>> products = await _productDetailsFuture;
+
+                          if (products.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text("Sepette ürün bulunmamaktadır."),
                                 backgroundColor: Colors.red,
                               ),
                             );
+                            return;
+                          }
+
+                          // 📍 Zaten yazdırılmışsa kullanıcıya bilgi ver
+                          if (isPrinted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Bu sipariş daha önce yazdırılmıştır."),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
+
+                          // 🔔 Kullanıcıdan yazdırma onayı al
+                          final bool confirm = await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Yazdırma Onayı", style: TextStyle(fontWeight: FontWeight.bold)),
+                              content: const Text("Siparişi yazdırmak istiyor musunuz? Yazdırdıktan sonra içerikte değişiklik yapılamaz."),
+                              actions: [
+                                TextButton(
+                                  child: const Text("İptal", style: TextStyle(color: Colors.red)),
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                ),
+                                TextButton(
+                                  child: const Text("Evet, Yazdır", style: TextStyle(color: Colors.green)),
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (!confirm) return; // Kullanıcı iptal ettiyse hiçbir şey yapma
+
+                          try {
+                            // ✅ PDF oluştur ve paylaş
+                            final filePath = await createPdf(companyName, currentDate, products, totalPrice);
+                            sharePdf(filePath);
+
+                            // ✅ Firestore’da isPrinted = true yap
+                            final String userId = FirebaseAuth.instance.currentUser!.uid;
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(userId)
+                                .collection('selfProcess')
+                                .doc(widget.id)
+                                .update({'isPrinted': true});
+
+                            setState(() {
+                              isPrinted = true;
+                            });
+
+                            // ✅ Kullanıcıya bilgi ver
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Sipariş başarıyla yazdırıldı."),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } catch (e) {
+                            print("PDF oluşturma hatası: $e");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("PDF oluşturulurken bir hata oluştu: $e"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
                           }
                         },
-
                         child: const Text("Yazdır",style: TextStyle(color: Colors.white),),
                       ),
                     ),
@@ -656,9 +745,10 @@ class _SiparisOlusturCustomerState extends State<SiparisOlusturCustomer> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xff65558F),
                         ),
-                        onPressed:() async{
-                          await saveProductId(widget.id); // product.id, eklenmek istenen ürünün ID'si
-                          print("Compay ID shared preferences ile kaydedildi.");
+                        onPressed:isPrinted
+                            ? null
+                            : () async {
+                          await saveProductId(widget.id);
                           _showAddProductOptions();
                         },
                         child: const Text("Ürün Ekle",style: TextStyle(color: Colors.white),),

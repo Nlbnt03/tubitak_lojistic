@@ -1,14 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:lojistik/added_succes.dart';
-import 'package:lojistik/customer_Menu.dart';
-import 'package:lojistik/delete_succsess.dart';
 import 'package:lojistik/firebase_options.dart';
 import 'package:lojistik/logIn_Page.dart';
-import 'package:lojistik/signUp_Page.dart';
-import 'package:lojistik/siparis_islemleri.dart';
-import 'package:lojistik/siparis_olustur_staff.dart';
-import 'package:lojistik/staff_Menu.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized(); // Flutter widget'larının başlatıldığından emin olun
@@ -24,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'FİO',
+      title: 'Barkod Defter',
       theme: ThemeData(
         useMaterial3: true,
       ),

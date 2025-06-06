@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _emailOrPhoneController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      labelText: 'E-posta veya Telefon Numarası',
+                      labelText: 'E-posta',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),

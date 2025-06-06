@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lojistik/info.dart';
 import 'package:lojistik/listed_product_customer.dart';
 import 'package:lojistik/profile_page.dart';
-import 'package:lojistik/search_with_barcode.dart';
 import 'package:lojistik/search_with_barcode_customer.dart';
-import 'package:lojistik/siparis_islemleri.dart';
 import 'package:lojistik/siparis_islemleri_customer.dart';
 
 class CustomerMenu extends StatefulWidget {

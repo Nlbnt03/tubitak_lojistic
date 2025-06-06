@@ -7,7 +7,7 @@
 	<key>NSCameraUsageDescription</key>
     <string>Kamera izni gerekli çünkü barkod taraması yapacağız.</string>
 	<key>CFBundleDisplayName</key>
-	<string>Lojistik</string>
+	<string>Barkod Defter</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

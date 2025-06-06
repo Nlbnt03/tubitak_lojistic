@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "330713263171",
-    "project_id": "fiotest-4c53a",
-    "storage_bucket": "fiotest-4c53a.firebasestorage.app"
+    "project_number": "216622572552",
+    "project_id": "gtuapp-2de40",
+    "storage_bucket": "gtuapp-2de40.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:330713263171:android:0bf14f50f6c4de9318f8f6",
+        "mobilesdk_app_id": "1:216622572552:android:92c384a18000c99fba5dbd",
         "android_client_info": {
           "package_name": "com.nalbantsoft.lojistik"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCIIUifSfb-gS5Nx66CCTSTfrCzgV_5tZ4"
+          "current_key": "AIzaSyCz9vdA66pr38Y_k-ev6skthdkwhM-RGdA"
         }
       ],
       "services": {

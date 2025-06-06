@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lojistik/logIn_Page.dart';
-import 'package:lojistik/signUp_Page.dart';
 
 class ProfilSayfasi extends StatefulWidget {
   @override
@@ -106,7 +105,10 @@ class _ProfilSayfasiState extends State<ProfilSayfasi> {
   Future<void> _logout() async {
     try {
       await _auth.signOut();
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => LoginPage()));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => LoginPage()),
+            (Route<dynamic> route) => false, // Bu kısım, tüm önceki sayfaları yığından çıkarır
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Çıkış yapılamadı: $e')),

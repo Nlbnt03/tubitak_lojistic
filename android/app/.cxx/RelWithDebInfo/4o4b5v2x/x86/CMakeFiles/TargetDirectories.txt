@@ -1,0 +1,2 @@
+/Users/ynalbant/Desktop/tubitak_lojistic/android/app/.cxx/RelWithDebInfo/4o4b5v2x/x86/CMakeFiles/rebuild_cache.dir
+/Users/ynalbant/Desktop/tubitak_lojistic/android/app/.cxx/RelWithDebInfo/4o4b5v2x/x86/CMakeFiles/edit_cache.dir
